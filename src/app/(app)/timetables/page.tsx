@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type {TimetableOption} from '@/lib/types';
+import type {TimetableOption, TimetableEntry} from '@/lib/types';
 import {
   Activity,
   BarChart,
@@ -32,37 +32,76 @@ import {useAppData} from '@/context/AppDataContext';
 import {useToast} from '@/hooks/use-toast';
 import {RadioGroup, RadioGroupItem} from '@/components/ui/radio-group';
 import {Label} from '@/components/ui/label';
-import { timetableOptions } from '@/lib/data';
+import { timetableOptions as sampleTimetableOptions } from '@/lib/data';
+import { generateTimetable } from '@/lib/timetable-generator';
+
+const FINALIZED_TIMETABLE_KEY = 'timewise_finalized_timetable';
 
 export default function TimetablesPage() {
-  const [generatedOptions, setGeneratedOptions] = useState<TimetableOption[]>(
-    []
-  );
-  const [selectedTimetable, setSelectedTimetable] = useState<string | null>(
-    null
-  );
-  const {toast} = useToast();
+  const [generatedOptions, setGeneratedOptions] = useState<TimetableOption[]>([]);
+  const [selectedTimetable, setSelectedTimetable] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { appData, setFinalizedTimetable } = useAppData();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Load sample timetables
-    setGeneratedOptions(timetableOptions);
+    // On mount, check if a timetable has been finalized previously
+    const savedFinalized = localStorage.getItem(FINALIZED_TIMETABLE_KEY);
+    if (savedFinalized) {
+      const finalTimetable: TimetableOption = JSON.parse(savedFinalized);
+      setGeneratedOptions([finalTimetable]);
+      setSelectedTimetable(String(finalTimetable.id));
+    }
   }, []);
 
+  const handleGenerate = () => {
+    setIsGenerating(true);
+    setSelectedTimetable(null);
+    setFinalizedTimetable(null);
+    localStorage.removeItem(FINALIZED_TIMETABLE_KEY);
+
+    setTimeout(() => {
+      const options = [
+        generateTimetable(1, appData),
+        generateTimetable(2, appData),
+      ];
+      setGeneratedOptions(options);
+      setIsGenerating(false);
+      toast({
+        title: 'Timetables Generated',
+        description: 'Two new sample options have been created.',
+      });
+    }, 1000); // Simulate network latency/processing time
+  };
 
   const handleFinalize = () => {
-    toast({
-      title: 'Timetable Finalized',
-      description: `You have selected timetable option ${selectedTimetable}.`,
-    });
+    const finalTimetable = generatedOptions.find(opt => String(opt.id) === selectedTimetable);
+    if (finalTimetable) {
+      setGeneratedOptions([finalTimetable]);
+      setFinalizedTimetable(finalTimetable.timetable);
+      localStorage.setItem(FINALIZED_TIMETABLE_KEY, JSON.stringify(finalTimetable));
+      toast({
+        title: 'Timetable Finalized',
+        description: `You have selected and saved timetable option ${selectedTimetable}.`,
+      });
+    }
   };
 
   return (
     <>
       <PageHeader
-        title="Timetable Viewer"
-        description="View and compare sample timetables."
+        title="Timetable Generator & Viewer"
+        description="Generate, compare, and finalize timetables for your institution."
         actions={
           <div className="flex items-center gap-4">
+            <Button onClick={handleGenerate} disabled={isGenerating} size="lg">
+              {isGenerating ? (
+                <Loader2 className="mr-2 animate-spin" />
+              ) : (
+                <Bot className="mr-2" />
+              )}
+              Generate Timetables
+            </Button>
             {generatedOptions.length > 0 && (
               <Button
                 onClick={handleFinalize}
@@ -77,6 +116,24 @@ export default function TimetablesPage() {
         }
       />
       
+      {isGenerating && (
+        <div className="flex items-center justify-center p-8 text-muted-foreground">
+          <Loader2 className="size-8 animate-spin mr-4" />
+          <span>Generating timetable options...</span>
+        </div>
+      )}
+
+      {!isGenerating && generatedOptions.length === 0 && (
+         <Card className="text-center">
+            <CardHeader>
+                <CardTitle>No Timetables Generated</CardTitle>
+                <CardDescription>
+                Click the &quot;Generate Timetables&quot; button to create new schedule options.
+                </CardDescription>
+            </CardHeader>
+        </Card>
+      )}
+
       <RadioGroup
         value={selectedTimetable || undefined}
         onValueChange={setSelectedTimetable}

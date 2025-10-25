@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { classrooms as initialClassrooms, faculty as initialFaculty, subjects as initialSubjects, studentBatches as initialStudentBatches, fixedSlots as initialFixedSlots } from '@/lib/data';
-import type { Classroom, Faculty, Subject, StudentBatch, FixedSlot } from '@/lib/types';
+import type { Classroom, Faculty, Subject, StudentBatch, FixedSlot, TimetableEntry } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export interface AppData {
@@ -29,11 +29,14 @@ interface AppDataContextProps {
   saveChanges: () => void;
   hasChanges: boolean;
   resetChanges: () => void;
+  finalizedTimetable: TimetableEntry[] | null;
+  setFinalizedTimetable: (timetable: TimetableEntry[] | null) => void;
 }
 
 const AppDataContext = createContext<AppDataContextProps | undefined>(undefined);
 
 const LOCAL_STORAGE_KEY = 'timewise_app_data';
+const FINALIZED_TIMETABLE_KEY = 'timewise_finalized_timetable';
 
 const initialData: AppData = {
     classrooms: initialClassrooms,
@@ -47,6 +50,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [appData, setAppData] = useState<AppData>(initialData);
   const [initialDataState, setInitialDataState] = useState<AppData>(initialData);
   const [hasChanges, setHasChanges] = useState(false);
+  const [finalizedTimetable, setFinalizedTimetable] = useState<TimetableEntry[] | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -57,12 +61,22 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setAppData(parsedData);
         setInitialDataState(parsedData);
       }
+      const savedFinalized = localStorage.getItem(FINALIZED_TIMETABLE_KEY);
+       if (savedFinalized) {
+        const finalTimetableOption = JSON.parse(savedFinalized);
+        setFinalizedTimetable(finalTimetableOption.timetable);
+      }
+
     } catch (error) {
       console.error("Failed to load data from local storage", error);
       setAppData(initialData);
       setInitialDataState(initialData);
     }
   }, []);
+
+  const handleSetFinalizedTimetable = (timetable: TimetableEntry[] | null) => {
+    setFinalizedTimetable(timetable);
+  };
 
   useEffect(() => {
     const changes = JSON.stringify(appData) !== JSON.stringify(initialDataState);
@@ -178,7 +192,9 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     saveChanges,
     hasChanges,
     resetChanges,
-  }), [appData, setAppData, saveChanges, hasChanges, resetChanges]);
+    finalizedTimetable,
+    setFinalizedTimetable: handleSetFinalizedTimetable,
+  }), [appData, saveChanges, hasChanges, resetChanges, finalizedTimetable]);
 
   return (
     <AppDataContext.Provider value={value}>
