@@ -25,13 +25,8 @@ export default function DashboardPage() {
   const { appData, finalizedTimetable } = useAppData();
   const { classrooms, faculty, subjects, studentBatches } = appData;
 
-  const getFacultySchedule = (facultyName: string) => {
-    return finalizedTimetable?.filter(entry => entry.faculty === facultyName) || [];
-  };
-
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const timeSlots = ["9-10 AM", "10-11 AM", "11-12 PM", "12-1 PM", "2-3 PM", "3-4 PM", "4-5 PM"];
-
 
   return (
     <>
@@ -95,7 +90,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-2">
+      <div className="mt-8 grid gap-8 lg:grid-cols-1">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -107,30 +102,35 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           {finalizedTimetable && (
-             <CardContent className="max-h-[400px] overflow-auto">
+             <CardContent className="max-h-[600px] overflow-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                        <TableHead>Day</TableHead>
-                        <TableHead>Time</TableHead>
-                        <TableHead>Subject</TableHead>
-                        <TableHead>Faculty</TableHead>
-                        <TableHead>Room</TableHead>
-                        <TableHead>Batch</TableHead>
+                            <TableHead className="w-[120px]">Time</TableHead>
+                            {daysOfWeek.map(day => (
+                                <TableHead key={day}>{day}</TableHead>
+                            ))}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {finalizedTimetable.map((entry, index) => (
-                        <TableRow key={index}>
-                            <TableCell>{entry.day}</TableCell>
-                            <TableCell>{entry.time}</TableCell>
-                            <TableCell className="font-medium">
-                            {entry.subject}
-                            </TableCell>
-                            <TableCell>{entry.faculty}</TableCell>
-                            <TableCell>{entry.room}</TableCell>
-                            <TableCell>{entry.batch}</TableCell>
-                        </TableRow>
+                        {timeSlots.map(slot => (
+                            <TableRow key={slot}>
+                                <TableCell className="font-medium">{slot}</TableCell>
+                                {daysOfWeek.map(day => {
+                                    const entries = finalizedTimetable.filter(e => e.day === day && e.time === slot);
+                                    return (
+                                        <TableCell key={day} className="align-top">
+                                            {entries.length > 0 ? entries.map((entry, index) => (
+                                                <div key={index} className="mb-2 last:mb-0 p-2 rounded-md bg-muted/50 text-xs">
+                                                    <div className="font-semibold">{entry.subject}</div>
+                                                    <div>{entry.faculty}</div>
+                                                    <div className="text-muted-foreground">{entry.batch} @ {entry.room}</div>
+                                                </div>
+                                            )) : '-'}
+                                        </TableCell>
+                                    )
+                                })}
+                            </TableRow>
                         ))}
                     </TableBody>
                 </Table>
@@ -138,62 +138,62 @@ export default function DashboardPage() {
           )}
         </Card>
         
-        <Card>
-           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <UserCheck />
-                Faculty Schedules
-            </CardTitle>
-            <CardDescription>
-              {finalizedTimetable ? 'Individual timetables for each faculty member.' : 'Schedules will be available after a timetable is finalized.'}
-            </CardDescription>
-          </CardHeader>
-          {finalizedTimetable && faculty.length > 0 && (
+         {finalizedTimetable && faculty.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                  <UserCheck />
+                  Faculty Schedules
+              </CardTitle>
+              <CardDescription>
+                Individual timetables for each faculty member.
+              </CardDescription>
+            </CardHeader>
             <CardContent>
-                <Tabs defaultValue={faculty[0].id}>
-                    <TabsList>
-                        {faculty.map(f => (
-                            <TabsTrigger key={f.id} value={f.id}>{f.name}</TabsTrigger>
-                        ))}
-                    </TabsList>
-                    {faculty.map(f => (
-                        <TabsContent key={f.id} value={f.id} className="max-h-[340px] overflow-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Time</TableHead>
-                                        {daysOfWeek.map(day => (
-                                            <TableHead key={day}>{day}</TableHead>
-                                        ))}
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {timeSlots.map(slot => (
-                                        <TableRow key={slot}>
-                                            <TableCell className="font-medium">{slot}</TableCell>
-                                            {daysOfWeek.map(day => {
-                                                const entry = finalizedTimetable.find(e => e.faculty === f.name && e.day === day && e.time === slot);
-                                                return (
-                                                    <TableCell key={day}>
-                                                        {entry ? (
-                                                            <div>
-                                                                <div className="font-semibold">{entry.subject}</div>
-                                                                <div className="text-xs text-muted-foreground">{entry.batch} @ {entry.room}</div>
-                                                            </div>
-                                                        ) : '-'}
-                                                    </TableCell>
-                                                )
-                                            })}
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TabsContent>
-                    ))}
-                </Tabs>
-            </CardContent>
-          )}
-        </Card>
+                  <Tabs defaultValue={faculty[0].id}>
+                      <TabsList>
+                          {faculty.map(f => (
+                              <TabsTrigger key={f.id} value={f.id}>{f.name}</TabsTrigger>
+                          ))}
+                      </TabsList>
+                      {faculty.map(f => (
+                          <TabsContent key={f.id} value={f.id} className="max-h-[500px] overflow-auto">
+                              <Table>
+                                  <TableHeader>
+                                      <TableRow>
+                                          <TableHead className="w-[120px]">Time</TableHead>
+                                          {daysOfWeek.map(day => (
+                                              <TableHead key={day}>{day}</TableHead>
+                                          ))}
+                                      </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                      {timeSlots.map(slot => (
+                                          <TableRow key={slot}>
+                                              <TableCell className="font-medium">{slot}</TableCell>
+                                              {daysOfWeek.map(day => {
+                                                  const entry = finalizedTimetable.find(e => e.faculty === f.name && e.day === day && e.time === slot);
+                                                  return (
+                                                      <TableCell key={day}>
+                                                          {entry ? (
+                                                              <div className="text-xs">
+                                                                  <div className="font-semibold">{entry.subject}</div>
+                                                                  <div className="text-muted-foreground">{entry.batch} @ {entry.room}</div>
+                                                              </div>
+                                                          ) : '-'}
+                                                      </TableCell>
+                                                  )
+                                              })}
+                                          </TableRow>
+                                      ))}
+                                  </TableBody>
+                              </Table>
+                          </TabsContent>
+                      ))}
+                  </Tabs>
+              </CardContent>
+          </Card>
+        )}
       </div>
     </>
   );
