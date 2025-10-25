@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,9 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { subjects as initialSubjects } from "@/lib/data";
 import type { Subject } from "@/lib/types";
-import { PlusCircle, Save } from "lucide-react";
+import { PlusCircle, Save, Trash2, Undo } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +41,18 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
+import { useAppData } from "@/context/AppDataContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const formSchema = z.object({
   subjectCode: z.string().min(1, "Subject code is required"),
@@ -51,22 +61,9 @@ const formSchema = z.object({
   classesRequiredPerWeek: z.coerce.number().min(1, "Classes required must be at least 1"),
 });
 
-const LOCAL_STORAGE_KEY = 'subjects_data';
-
 export default function SubjectsPage() {
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const { appData, addSubject, deleteSubject, saveChanges, hasChanges, resetChanges } = useAppData();
   const [open, setOpen] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedData) {
-      setSubjects(JSON.parse(savedData));
-    } else {
-      setSubjects(initialSubjects);
-    }
-  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -79,23 +76,13 @@ export default function SubjectsPage() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const newSubject: Subject = {
-      id: `S${(subjects.length + 1).toString().padStart(3, "0")}`,
-      ...values,
-    };
-    setSubjects((prev) => [...prev, newSubject]);
-    setHasChanges(true);
+    addSubject(values);
     form.reset();
     setOpen(false);
   }
-
-  function handleSaveChanges() {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(subjects));
-    setHasChanges(false);
-    toast({
-      title: "Success",
-      description: "Your changes have been saved successfully.",
-    });
+  
+  function handleDelete(id: string) {
+    deleteSubject(id);
   }
 
   return (
@@ -106,10 +93,16 @@ export default function SubjectsPage() {
         actions={
            <div className="flex gap-2">
              {hasChanges && (
-              <Button onClick={handleSaveChanges} variant="outline">
-                <Save className="mr-2" />
-                Save Changes
-              </Button>
+               <>
+                <Button onClick={saveChanges} variant="outline">
+                  <Save className="mr-2" />
+                  Save Changes
+                </Button>
+                 <Button onClick={resetChanges} variant="destructive">
+                  <Undo className="mr-2" />
+                  Cancel
+                </Button>
+               </>
             )}
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
@@ -213,15 +206,37 @@ export default function SubjectsPage() {
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Classes/Week</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {subjects.map((subject) => (
+            {appData.subjects.map((subject) => (
               <TableRow key={subject.id}>
                 <TableCell className="font-medium">{subject.subjectCode}</TableCell>
                 <TableCell>{subject.name}</TableCell>
                 <TableCell>{subject.type}</TableCell>
                 <TableCell>{subject.classesRequiredPerWeek}</TableCell>
+                <TableCell className="text-right">
+                   <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the subject. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(subject.id)}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

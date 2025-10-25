@@ -12,7 +12,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { classrooms, faculty, subjects, studentBatches } from "@/lib/data";
+import { useAppData } from "@/context/AppDataContext";
 import { School, Users, Book } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 
@@ -31,6 +31,9 @@ const chartConfig = {
 };
 
 export default function DashboardPage() {
+  const { appData } = useAppData();
+  const { classrooms, faculty, subjects, studentBatches } = appData;
+
   return (
     <>
       <PageHeader

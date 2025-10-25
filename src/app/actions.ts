@@ -1,9 +1,10 @@
 "use server";
 
 import { resolveTimetableConflicts } from "@/ai/flows/resolve-timetable-conflicts";
-import { classrooms, faculty, subjects, studentBatches, fixedSlots } from "@/lib/data";
+import type { AppData } from "@/context/AppDataContext";
 
-export async function getConflictResolutionSuggestions(conflicts: string[]) {
+export async function getConflictResolutionSuggestions(conflicts: string[], appData: AppData) {
+  const { classrooms, faculty, subjects, studentBatches, fixedSlots } = appData;
   try {
     const result = await resolveTimetableConflicts({
       conflicts,

@@ -11,9 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { studentBatches as initialBatches } from "@/lib/data";
 import type { StudentBatch } from "@/lib/types";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Save, Trash2, Undo } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +34,18 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useAppData } from "@/context/AppDataContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const formSchema = z.object({
   program: z.string().min(1, "Program is required"),
@@ -46,7 +57,7 @@ const formSchema = z.object({
 });
 
 export default function BatchesPage() {
-  const [batches, setBatches] = useState<StudentBatch[]>(initialBatches);
+  const { appData, addStudentBatch, deleteStudentBatch, saveChanges, hasChanges, resetChanges } = useAppData();
   const [open, setOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -62,18 +73,16 @@ export default function BatchesPage() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const newBatch: StudentBatch = {
-      id: `B${(batches.length + 1).toString().padStart(3, "0")}`,
-      program: values.program,
-      year: values.year,
-      department: values.department,
-      batchCode: values.batchCode,
-      strength: values.strength,
-      electiveCombinations: values.electiveCombinations?.split(',').map(s => s.trim()).filter(Boolean),
-    };
-    setBatches((prev) => [...prev, newBatch]);
+    addStudentBatch({
+        ...values,
+        electiveCombinations: values.electiveCombinations?.split(',').map(s => s.trim()).filter(Boolean),
+    });
     form.reset();
     setOpen(false);
+  }
+
+  function handleDelete(id: string) {
+    deleteStudentBatch(id);
   }
 
   return (
@@ -82,114 +91,128 @@ export default function BatchesPage() {
         title="Student Batches"
         description="Manage student groups, programs, and their strengths."
         actions={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2" />
-                Add Batch
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Add New Student Batch</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="grid gap-4 py-4"
-                >
-                  <FormField
-                    control={form.control}
-                    name="program"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Program</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., B.Tech" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="batchCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Batch Code</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., CSE-2A" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid grid-cols-2 gap-4">
+          <div className="flex gap-2">
+            {hasChanges && (
+                <>
+                  <Button onClick={saveChanges} variant="outline">
+                    <Save className="mr-2" />
+                    Save Changes
+                  </Button>
+                  <Button onClick={resetChanges} variant="destructive">
+                    <Undo className="mr-2" />
+                    Cancel
+                  </Button>
+                </>
+            )}
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2" />
+                  Add Batch
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Add New Student Batch</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="grid gap-4 py-4"
+                  >
                     <FormField
                       control={form.control}
-                      name="year"
+                      name="program"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Year</FormLabel>
+                          <FormLabel>Program</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} />
+                            <Input placeholder="e.g., B.Tech" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                     <FormField
+                    <FormField
                       control={form.control}
-                      name="strength"
+                      name="batchCode"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Strength</FormLabel>
+                          <FormLabel>Batch Code</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} />
+                            <Input placeholder="e.g., CSE-2A" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Department</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., CSE" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="electiveCombinations"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Electives (comma-separated)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., CS-E1,CS-ML-E1" {...field} value={field.value || ''} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button type="button" variant="secondary">
-                        Cancel
-                      </Button>
-                    </DialogClose>
-                    <Button type="submit">Add Batch</Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="year"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Year</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="strength"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Strength</FormLabel>
+                            <FormControl>
+                              <Input type="number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="department"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Department</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., CSE" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="electiveCombinations"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Electives (comma-separated)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., CS-E1,CS-ML-E1" {...field} value={field.value || ''} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button type="button" variant="secondary">
+                          Cancel
+                        </Button>
+                      </DialogClose>
+                      <Button type="submit">Add Batch</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
         }
       />
       <div className="rounded-lg border shadow-sm">
@@ -202,10 +225,11 @@ export default function BatchesPage() {
               <TableHead>Department</TableHead>
               <TableHead>Strength</TableHead>
               <TableHead>Electives</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {batches.map((batch) => (
+            {appData.studentBatches.map((batch) => (
               <TableRow key={batch.id}>
                 <TableCell className="font-medium">{batch.batchCode}</TableCell>
                 <TableCell>{batch.program}</TableCell>
@@ -213,6 +237,27 @@ export default function BatchesPage() {
                 <TableCell>{batch.department}</TableCell>
                 <TableCell>{batch.strength}</TableCell>
                 <TableCell>{batch.electiveCombinations?.join(", ") || 'N/A'}</TableCell>
+                <TableCell className="text-right">
+                   <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the student batch. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(batch.id)}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

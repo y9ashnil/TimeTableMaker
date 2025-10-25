@@ -9,6 +9,7 @@ import { getConflictResolutionSuggestions } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Bot, Lightbulb, Loader2, TriangleAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAppData } from "@/context/AppDataContext";
 
 const placeholderText = `Enter each conflict on a new line. For example:
 - Dr. Sharma has a class conflict on Monday at 10 AM.
@@ -20,6 +21,7 @@ export default function ConflictsPage() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { appData } = useAppData();
 
   const handleResolveConflicts = async () => {
     if (!conflicts.trim()) {
@@ -35,7 +37,7 @@ export default function ConflictsPage() {
     setSuggestions([]);
 
     const conflictLines = conflicts.split('\n').filter(line => line.trim() !== '');
-    const result = await getConflictResolutionSuggestions(conflictLines);
+    const result = await getConflictResolutionSuggestions(conflictLines, appData);
     
     setIsLoading(false);
 

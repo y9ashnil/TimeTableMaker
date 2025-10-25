@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,9 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { classrooms as initialClassrooms } from "@/lib/data";
 import type { Classroom } from "@/lib/types";
-import { PlusCircle, Save } from "lucide-react";
+import { PlusCircle, Save, Trash2, Undo } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +41,18 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
+import { useAppData } from "@/context/AppDataContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -50,22 +60,10 @@ const formSchema = z.object({
   type: z.enum(["Lecture", "Lab"]),
 });
 
-const LOCAL_STORAGE_KEY = 'classrooms_data';
 
 export default function ClassroomsPage() {
-  const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+  const { appData, addClassroom, deleteClassroom, saveChanges, hasChanges, resetChanges } = useAppData();
   const [open, setOpen] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedData) {
-      setClassrooms(JSON.parse(savedData));
-    } else {
-      setClassrooms(initialClassrooms);
-    }
-  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,24 +75,15 @@ export default function ClassroomsPage() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const newClassroom: Classroom = {
-      id: `CR${(classrooms.length + 1).toString().padStart(3, "0")}`,
-      ...values,
-    };
-    setClassrooms((prev) => [...prev, newClassroom]);
-    setHasChanges(true);
+    addClassroom(values);
     form.reset();
     setOpen(false);
   }
 
-  function handleSaveChanges() {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(classrooms));
-    setHasChanges(false);
-    toast({
-      title: "Success",
-      description: "Your changes have been saved successfully.",
-    });
+  function handleDelete(id: string) {
+    deleteClassroom(id);
   }
+
 
   return (
     <>
@@ -104,10 +93,16 @@ export default function ClassroomsPage() {
         actions={
           <div className="flex gap-2">
              {hasChanges && (
-              <Button onClick={handleSaveChanges} variant="outline">
-                <Save className="mr-2" />
-                Save Changes
-              </Button>
+              <>
+                <Button onClick={saveChanges} variant="outline">
+                  <Save className="mr-2" />
+                  Save Changes
+                </Button>
+                <Button onClick={resetChanges} variant="destructive">
+                  <Undo className="mr-2" />
+                  Cancel
+                </Button>
+              </>
             )}
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
@@ -198,15 +193,37 @@ export default function ClassroomsPage() {
               <TableHead>Name</TableHead>
               <TableHead>Capacity</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {classrooms.map((classroom) => (
+            {appData.classrooms.map((classroom) => (
               <TableRow key={classroom.id}>
                 <TableCell className="font-medium">{classroom.id}</TableCell>
                 <TableCell>{classroom.name}</TableCell>
                 <TableCell>{classroom.capacity}</TableCell>
                 <TableCell>{classroom.type}</TableCell>
+                <TableCell className="text-right">
+                   <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the classroom. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(classroom.id)}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
