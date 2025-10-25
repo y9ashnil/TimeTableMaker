@@ -14,18 +14,12 @@ export async function getConflictResolutionSuggestions(
   try {
     const result = await resolveTimetableConflicts({
       conflicts,
-      classrooms: classrooms.map(({id, ...rest}) => ({
-        ...rest,
-        type: rest.type as 'Lecture' | 'Lab',
-      })),
+      classrooms: classrooms.map(({id, ...rest}) => rest),
       faculty: faculty.map(({id, ...rest}) => ({
         ...rest,
         avgLeavesPerMonth: rest.avgLeavesPerMonth || 0,
       })),
-      subjects: subjects.map(({id, ...rest}) => ({
-        ...rest,
-        type: rest.type as 'Lecture' | 'Lab',
-      })),
+      subjects: subjects.map(({id, ...rest}) => rest),
       studentBatches: studentBatches.map(({id, ...rest}) => ({
         ...rest,
         electiveCombinations: rest.electiveCombinations || [],
@@ -43,18 +37,12 @@ export async function generateTimetableOptions(appData: AppData) {
   const {classrooms, faculty, subjects, studentBatches, fixedSlots} = appData;
   try {
     const result = await generateTimetable({
-      classrooms: classrooms.map(({id, ...rest}) => ({
-        ...rest,
-        type: rest.type as 'Lecture' | 'Lab',
-      })),
+      classrooms: classrooms.map(({id, ...rest}) => rest),
       faculty: faculty.map(({id, ...rest}) => ({
         ...rest,
         avgLeavesPerMonth: rest.avgLeavesPerMonth || 0,
       })),
-      subjects: subjects.map(({id, ...rest}) => ({
-        ...rest,
-        type: rest.type as 'Lecture' | 'Lab',
-      })),
+      subjects: subjects.map(({id, ...rest}) => rest),
       studentBatches: studentBatches.map(({id, ...rest}) => ({
         ...rest,
         electiveCombinations: rest.electiveCombinations || [],
