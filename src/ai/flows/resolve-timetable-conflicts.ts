@@ -18,7 +18,6 @@ const ResolveTimetableConflictsInputSchema = z.object({
   classrooms: z
     .array(
       z.object({
-        id: z.string(),
         name: z.string(),
         capacity: z.number(),
         type: z.enum(['Lecture', 'Lab']),
@@ -47,20 +46,20 @@ const ResolveTimetableConflictsInputSchema = z.object({
       })
     )
     .describe('A list of subjects and their details.'),
-  studentBatches:
-    z.array(
+  studentBatches: z
+    .array(
       z.object({
         program: z.string(),
         year: z.number(),
         department: z.string(),
         batchCode: z.string(),
         strength: z.number(),
-        electiveCombinations: z.array(z.string()).optional(),
+        electiveCombinations: z.array(z.string()),
       })
     )
     .describe('A list of student batches and their details.'),
-  fixedSlots:
-    z.array(
+  fixedSlots: z
+    .array(
       z.object({
         day: z.string(),
         time: z.string(),
@@ -101,14 +100,14 @@ const prompt = ai.definePrompt({
   Given the following timetable conflicts and university data, suggest potential rearrangements to resolve the conflicts.  
   Consider moving classes to different time slots or rooms. Provide specific and actionable suggestions. Do not provide suggestions which violate any existing constraints.
 
-  Conflicts: {{json stringify=conflicts}}
+  Conflicts: {{{json conflicts}}}
   
   Available Data:
-  - Classrooms: {{json stringify=classrooms}}
-  - Faculty: {{json stringify=faculty}}
-  - Subjects: {{json stringify=subjects}}
-  - Student Batches: {{json stringify=studentBatches}}
-  - Fixed Slots: {{json stringify=fixedSlots}}
+  - Classrooms: {{{json classrooms}}}
+  - Faculty: {{{json faculty}}}
+  - Subjects: {{{json subjects}}}
+  - Student Batches: {{{json studentBatches}}}
+  - Fixed Slots: {{{json fixedSlots}}}
   `,
 });
 
@@ -120,6 +119,9 @@ const resolveTimetableConflictsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('Failed to get suggestions: AI returned no output.');
+    }
+    return output;
   }
 );

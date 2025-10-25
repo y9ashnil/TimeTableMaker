@@ -17,19 +17,20 @@ export async function getConflictResolutionSuggestions(
       classrooms: classrooms.map(({id, ...rest}) => rest),
       faculty: faculty.map(({id, ...rest}) => ({
         ...rest,
-        avgLeavesPerMonth: rest.avgLeavesPerMonth || 0,
+        avgLeavesPerMonth: rest.avgLeavesPerMonth ?? 0,
       })),
       subjects: subjects.map(({id, ...rest}) => rest),
       studentBatches: studentBatches.map(({id, ...rest}) => ({
         ...rest,
-        electiveCombinations: rest.electiveCombinations || [],
+        electiveCombinations: rest.electiveCombinations ?? [],
       })),
       fixedSlots: fixedSlots.map(({id, ...rest}) => rest),
     });
     return {success: true, suggestions: result.suggestions};
   } catch (error) {
     console.error('Error resolving timetable conflicts:', error);
-    return {success: false, error: 'Failed to get suggestions from AI. Please ensure your Gemini API key is configured correctly.'};
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return {success: false, error: `Failed to get suggestions from AI. ${errorMessage}`};
   }
 }
 
@@ -40,18 +41,19 @@ export async function generateTimetableOptions(appData: AppData) {
       classrooms: classrooms.map(({id, ...rest}) => rest),
       faculty: faculty.map(({id, ...rest}) => ({
         ...rest,
-        avgLeavesPerMonth: rest.avgLeavesPerMonth || 0,
+        avgLeavesPerMonth: rest.avgLeavesPerMonth ?? 0,
       })),
       subjects: subjects.map(({id, ...rest}) => rest),
       studentBatches: studentBatches.map(({id, ...rest}) => ({
         ...rest,
-        electiveCombinations: rest.electiveCombinations || [],
+        electiveCombinations: rest.electiveCombinations ?? [],
       })),
       fixedSlots: fixedSlots.map(({id, ...rest}) => rest),
     });
     return {success: true, timetableOptions: result.timetableOptions};
   } catch (error) {
     console.error('Error generating timetable:', error);
-    return {success: false, error: 'Failed to generate timetable from AI. Please ensure your Gemini API key is configured correctly.'};
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return {success: false, error: `Failed to generate timetable from AI. ${errorMessage}`};
   }
 }

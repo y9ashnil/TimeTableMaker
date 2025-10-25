@@ -15,7 +15,6 @@ const GenerateTimetableInputSchema = z.object({
   classrooms: z
     .array(
       z.object({
-        id: z.string(),
         name: z.string(),
         capacity: z.number(),
         type: z.enum(['Lecture', 'Lab']),
@@ -52,7 +51,7 @@ const GenerateTimetableInputSchema = z.object({
         department: z.string(),
         batchCode: z.string(),
         strength: z.number(),
-        electiveCombinations: z.array(z.string()).optional(),
+        electiveCombinations: z.array(z.string()),
       })
     )
     .describe('A list of student batches and their details.'),
@@ -115,11 +114,11 @@ const prompt = ai.definePrompt({
   Generate 2 timetable options based on the provided data.
   
   Constraints & Data:
-  - Classrooms: {{json stringify=classrooms}}
-  - Faculty: {{json stringify=faculty}}
-  - Subjects: {{json stringify=subjects}}
-  - Student Batches: {{json stringify=studentBatches}}
-  - Fixed Slots: {{json stringify=fixedSlots}}
+  - Classrooms: {{{json classrooms}}}
+  - Faculty: {{{json faculty}}}
+  - Subjects: {{{json subjects}}}
+  - Student Batches: {{{json studentBatches}}}
+  - Fixed Slots: {{{json fixedSlots}}}
 
   Instructions:
   1. Create two distinct timetable options.
@@ -138,6 +137,9 @@ const generateTimetableFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('Failed to generate timetable: AI returned no output.');
+    }
+    return output;
   }
 );

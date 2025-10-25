@@ -1,3 +1,3 @@
 'use server';
-import '@/ai/flows/resolve-timetable-conflicts.ts';
-import '@/ai/flows/generate-timetable.ts';
+import '@/ai/flows/generate-timetable';
+import '@/ai/flows/resolve-timetable-conflicts';
