@@ -96,7 +96,20 @@ const prompt = ai.definePrompt({
   name: 'resolveTimetableConflictsPrompt',
   input: {schema: ResolveTimetableConflictsInputSchema},
   output: {schema: ResolveTimetableConflictsOutputSchema},
-  prompt: `You are an AI assistant specialized in resolving timetable conflicts for universities.\n\n  Given the following timetable conflicts, available classrooms, faculty, subjects, student batches, and fixed slots, suggest potential rearrangements to resolve the conflicts.  Consider moving classes to different time slots or rooms. Provide specific and actionable suggestions. Do not provide suggestions which violate any existing constraints.\n\n  Conflicts:\n  {{#each conflicts}}- {{{this}}}{{\each}}\n\n  Classrooms:\n  {{#each classrooms}}- ID: {{id}}, Name: {{name}}, Capacity: {{capacity}}, Type: {{type}}{{\each}}\n\n  Faculty:\n  {{#each faculty}}- Name: {{name}}, Department: {{department}}, Subjects: {{subjects}}, Max Classes Per Week: {{maxClassesPerWeek}}, Max Classes Per Day: {{maxClassesPerDay}}, Avg Leaves Per Month: {{avgLeavesPerMonth}}{{\each}}\n\n  Subjects:\n  {{#each subjects}}- Subject Code: {{subjectCode}}, Name: {{name}}, Type: {{type}}, Classes Required Per Week: {{classesRequiredPerWeek}}{{\each}}\n\n  Student Batches:\n  {{#each studentBatches}}- Program: {{program}}, Year: {{year}}, Department: {{department}}, Batch Code: {{batchCode}}, Strength: {{strength}}, Elective Combinations: {{electiveCombinations}}{{\each}}\n\n  Fixed Slots:\n  {{#each fixedSlots}}- Day: {{day}}, Time: {{time}}, Event Name: {{eventName}}{{\each}}\n  `,
+  prompt: `You are an AI assistant specialized in resolving timetable conflicts for universities.
+
+  Given the following timetable conflicts and university data, suggest potential rearrangements to resolve the conflicts.  
+  Consider moving classes to different time slots or rooms. Provide specific and actionable suggestions. Do not provide suggestions which violate any existing constraints.
+
+  Conflicts: {{json stringify=conflicts}}
+  
+  Available Data:
+  - Classrooms: {{json stringify=classrooms}}
+  - Faculty: {{json stringify=faculty}}
+  - Subjects: {{json stringify=subjects}}
+  - Student Batches: {{json stringify=studentBatches}}
+  - Fixed Slots: {{json stringify=fixedSlots}}
+  `,
 });
 
 const resolveTimetableConflictsFlow = ai.defineFlow(
