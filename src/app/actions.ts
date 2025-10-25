@@ -33,7 +33,7 @@ export async function getConflictResolutionSuggestions(
     return {success: true, suggestions: result.suggestions};
   } catch (error) {
     console.error('Error resolving timetable conflicts:', error);
-    return {success: false, error: 'Failed to get suggestions from AI.'};
+    return {success: false, error: 'Failed to get suggestions from AI. Please ensure your Gemini API key is configured correctly in Settings.'};
   }
 }
 
@@ -62,6 +62,16 @@ export async function generateTimetableOptions(appData: AppData) {
     return {success: true, timetableOptions: result.timetableOptions};
   } catch (error) {
     console.error('Error generating timetable:', error);
-    return {success: false, error: 'Failed to generate timetable from AI.'};
+    return {success: false, error: 'Failed to generate timetable from AI. Please ensure your Gemini API key is configured correctly in Settings.'};
   }
+}
+
+export async function saveApiKey(apiKey: string) {
+    if (!apiKey) {
+        return { success: false, error: "API key is required." };
+    }
+    // In a real application, this would securely save the API key.
+    // For this environment, we'll log it to show it's received.
+    console.log("API Key received. In a real app, this would be saved securely.");
+    return { success: true };
 }
