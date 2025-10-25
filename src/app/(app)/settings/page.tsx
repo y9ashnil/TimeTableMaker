@@ -3,29 +3,29 @@
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { Terminal, TriangleAlert } from "lucide-react";
 
 export default function SettingsPage() {
   return (
     <>
       <PageHeader
         title="Settings"
-        description="Manage your application settings and API configurations."
+        description="Manage your application settings."
       />
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Gemini API Configuration</CardTitle>
+            <CardTitle>AI Configuration</CardTitle>
             <CardDescription>
-              The Google AI Gemini API key is configured for this application.
+              AI features have been disabled in this application.
             </CardDescription>
           </CardHeader>
           <CardContent>
-             <Alert>
-                <Terminal className="h-4 w-4" />
-                <AlertTitle>Configuration Status</AlertTitle>
+             <Alert variant="destructive">
+                <TriangleAlert className="h-4 w-4" />
+                <AlertTitle>AI Services Are Offline</AlertTitle>
                 <AlertDescription>
-                  The Gemini API key has been hardcoded into the application's environment. The AI features are ready to use.
+                  The Gemini API integration has been removed. All AI-powered features are currently unavailable.
                 </AlertDescription>
             </Alert>
           </CardContent>

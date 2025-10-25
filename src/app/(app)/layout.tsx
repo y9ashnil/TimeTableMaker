@@ -81,18 +81,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive("/conflicts")}
-                  tooltip="Conflict Solver"
-                >
-                  <Link href="/conflicts">
-                    <Sparkles />
-                    <span>AI Conflict Solver</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
 
             <SidebarMenu className="mt-4">
