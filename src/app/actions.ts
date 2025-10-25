@@ -1,4 +1,6 @@
 'use server';
+import {config} from 'dotenv';
+config();
 
 import {resolveTimetableConflicts} from '@/ai/flows/resolve-timetable-conflicts';
 import {generateTimetable} from '@/ai/flows/generate-timetable';
@@ -33,7 +35,7 @@ export async function getConflictResolutionSuggestions(
     return {success: true, suggestions: result.suggestions};
   } catch (error) {
     console.error('Error resolving timetable conflicts:', error);
-    return {success: false, error: 'Failed to get suggestions from AI. Please ensure your Gemini API key is configured correctly in Settings.'};
+    return {success: false, error: 'Failed to get suggestions from AI. Please ensure your Gemini API key is configured correctly.'};
   }
 }
 
@@ -62,6 +64,6 @@ export async function generateTimetableOptions(appData: AppData) {
     return {success: true, timetableOptions: result.timetableOptions};
   } catch (error) {
     console.error('Error generating timetable:', error);
-    return {success: false, error: 'Failed to generate timetable from AI. Please ensure your Gemini API key is configured correctly in Settings.'};
+    return {success: false, error: 'Failed to generate timetable from AI. Please ensure your Gemini API key is configured correctly.'};
   }
 }
