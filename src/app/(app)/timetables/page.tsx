@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type {TimetableOption, TimetableEntry} from '@/lib/types';
+import type {TimetableOption} from '@/lib/types';
 import {
   Activity,
   BarChart,
@@ -27,13 +27,14 @@ import {
   Bot,
   Loader2,
   CheckCircle,
+  FileCheck,
 } from 'lucide-react';
 import {useAppData} from '@/context/AppDataContext';
 import {useToast} from '@/hooks/use-toast';
 import {RadioGroup, RadioGroupItem} from '@/components/ui/radio-group';
 import {Label} from '@/components/ui/label';
-import { timetableOptions as sampleTimetableOptions } from '@/lib/data';
 import { generateTimetable } from '@/lib/timetable-generator';
+import { Badge } from '@/components/ui/badge';
 
 const FINALIZED_TIMETABLE_KEY = 'timewise_finalized_timetable';
 
@@ -41,18 +42,26 @@ export default function TimetablesPage() {
   const [generatedOptions, setGeneratedOptions] = useState<TimetableOption[]>([]);
   const [selectedTimetable, setSelectedTimetable] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { appData, setFinalizedTimetable } = useAppData();
+  const { appData, setFinalizedTimetable, finalizedTimetable } = useAppData();
   const { toast } = useToast();
+
+  const isFinalized = finalizedTimetable !== null && generatedOptions.length === 1;
 
   useEffect(() => {
     // On mount, check if a timetable has been finalized previously
     const savedFinalized = localStorage.getItem(FINALIZED_TIMETABLE_KEY);
     if (savedFinalized) {
-      const finalTimetable: TimetableOption = JSON.parse(savedFinalized);
-      setGeneratedOptions([finalTimetable]);
-      setSelectedTimetable(String(finalTimetable.id));
+      try {
+        const finalTimetable: TimetableOption = JSON.parse(savedFinalized);
+        setGeneratedOptions([finalTimetable]);
+        setSelectedTimetable(String(finalTimetable.id));
+        setFinalizedTimetable(finalTimetable.timetable);
+      } catch (e) {
+        console.error("Could not parse finalized timetable from localStorage", e);
+        localStorage.removeItem(FINALIZED_TIMETABLE_KEY);
+      }
     }
-  }, []);
+  }, [setFinalizedTimetable]);
 
   const handleGenerate = () => {
     setIsGenerating(true);
@@ -100,9 +109,9 @@ export default function TimetablesPage() {
               ) : (
                 <Bot className="mr-2" />
               )}
-              Generate Timetables
+              {isFinalized ? 'Generate New Timetables' : 'Generate Timetables'}
             </Button>
-            {generatedOptions.length > 0 && (
+            {!isFinalized && generatedOptions.length > 0 && (
               <Button
                 onClick={handleFinalize}
                 disabled={!selectedTimetable}
@@ -138,35 +147,44 @@ export default function TimetablesPage() {
         value={selectedTimetable || undefined}
         onValueChange={setSelectedTimetable}
         className="grid gap-6 lg:grid-cols-1 xl:grid-cols-2"
+        disabled={isFinalized}
       >
         {generatedOptions.map(option => (
           <Label
             key={option.id}
             htmlFor={`timetable-option-${option.id}`}
-            className="block cursor-pointer"
+            className={`block ${isFinalized ? '' : 'cursor-pointer'}`}
           >
             <Card
-              className={`transition-all ${selectedTimetable === String(option.id) ? 'border-primary ring-2 ring-primary' : ''}`}
+              className={`transition-all ${selectedTimetable === String(option.id) && !isFinalized ? 'border-primary ring-2 ring-primary' : ''} ${isFinalized ? 'border-green-500 bg-green-50/20' : ''}`}
             >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <RadioGroupItem
-                      value={String(option.id)}
-                      id={`timetable-option-${option.id}`}
-                    />
+                     {!isFinalized && (
+                       <RadioGroupItem
+                        value={String(option.id)}
+                        id={`timetable-option-${option.id}`}
+                      />
+                     )}
                     <span>Sample Timetable Option {option.id}</span>
                   </div>
-                  <span className="text-sm font-medium text-primary">
-                    Score:{' '}
-                    {((option.scores.utilization + option.scores.balance) /
-                      2
-                    ).toFixed(0)}
-                  </span>
+                  {isFinalized ? (
+                     <Badge variant="outline" className="text-green-600 border-green-600 gap-2">
+                        <FileCheck className="size-4" />
+                        Finalized
+                      </Badge>
+                  ) : (
+                    <span className="text-sm font-medium text-primary">
+                      Score:{' '}
+                      {((option.scores.utilization + option.scores.balance) /
+                        2
+                      ).toFixed(0)}
+                    </span>
+                  )}
                 </CardTitle>
                 <CardDescription>
-                  A sample timetable option. Review scores and schedule
-                  below.
+                  {isFinalized ? 'This is the official timetable for the institution.' : 'A sample timetable option. Review scores and schedule below.'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
