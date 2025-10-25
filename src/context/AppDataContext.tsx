@@ -74,9 +74,9 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, []);
 
-  const handleSetFinalizedTimetable = (timetable: TimetableEntry[] | null) => {
+  const handleSetFinalizedTimetable = useCallback((timetable: TimetableEntry[] | null) => {
     setFinalizedTimetable(timetable);
-  };
+  }, []);
 
   useEffect(() => {
     const changes = JSON.stringify(appData) !== JSON.stringify(initialDataState);
@@ -194,7 +194,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     resetChanges,
     finalizedTimetable,
     setFinalizedTimetable: handleSetFinalizedTimetable,
-  }), [appData, saveChanges, hasChanges, resetChanges, finalizedTimetable]);
+  }), [appData, saveChanges, hasChanges, resetChanges, finalizedTimetable, handleSetFinalizedTimetable]);
 
   return (
     <AppDataContext.Provider value={value}>
