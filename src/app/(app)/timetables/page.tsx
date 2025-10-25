@@ -45,7 +45,7 @@ export default function TimetablesPage() {
   const { appData, setFinalizedTimetable, finalizedTimetable } = useAppData();
   const { toast } = useToast();
 
-  const isFinalized = finalizedTimetable !== null && generatedOption !== null;
+  const isFinalized = finalizedTimetable !== null && generatedOption !== null && isSelected;
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const timeSlots = ["9-10 AM", "10-11 AM", "11-12 PM", "12-1 PM", "2-3 PM", "3-4 PM", "4-5 PM"];
@@ -59,7 +59,9 @@ export default function TimetablesPage() {
         const finalTimetable: TimetableOption = JSON.parse(savedFinalized);
         setGeneratedOption(finalTimetable);
         setIsSelected(true);
-        setFinalizedTimetable(finalTimetable.timetable);
+        if (setFinalizedTimetable) {
+          setFinalizedTimetable(finalTimetable.timetable);
+        }
       } catch (e) {
         console.error("Could not parse finalized timetable from localStorage", e);
         localStorage.removeItem(FINALIZED_TIMETABLE_KEY);
