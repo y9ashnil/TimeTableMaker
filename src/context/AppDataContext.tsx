@@ -106,75 +106,75 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setAppData(initialDataState);
   }, [initialDataState]);
 
-  const addClassroom = (classroom: Omit<Classroom, 'id'>) => {
+  const addClassroom = useCallback((classroom: Omit<Classroom, 'id'>) => {
     setAppData(prev => ({
       ...prev,
       classrooms: [...prev.classrooms, { ...classroom, id: `CR${(prev.classrooms.length + 1).toString().padStart(3, '0')}` }]
     }));
-  };
+  }, []);
 
-  const deleteClassroom = (id: string) => {
+  const deleteClassroom = useCallback((id: string) => {
     setAppData(prev => ({
       ...prev,
       classrooms: prev.classrooms.filter(c => c.id !== id)
     }));
-  };
+  }, []);
 
-  const addFaculty = (faculty: Omit<Faculty, 'id'>) => {
+  const addFaculty = useCallback((faculty: Omit<Faculty, 'id'>) => {
     setAppData(prev => ({
       ...prev,
       faculty: [...prev.faculty, { ...faculty, id: `F${(prev.faculty.length + 1).toString().padStart(3, '0')}` }]
     }));
-  };
+  }, []);
 
-  const deleteFaculty = (id: string) => {
+  const deleteFaculty = useCallback((id: string) => {
     setAppData(prev => ({
       ...prev,
       faculty: prev.faculty.filter(f => f.id !== id)
     }));
-  };
+  }, []);
 
-  const addSubject = (subject: Omit<Subject, 'id'>) => {
+  const addSubject = useCallback((subject: Omit<Subject, 'id'>) => {
     setAppData(prev => ({
       ...prev,
       subjects: [...prev.subjects, { ...subject, id: `S${(prev.subjects.length + 1).toString().padStart(3, '0')}` }]
     }));
-  };
+  }, []);
 
-  const deleteSubject = (id: string) => {
+  const deleteSubject = useCallback((id: string) => {
     setAppData(prev => ({
       ...prev,
       subjects: prev.subjects.filter(s => s.id !== id)
     }));
-  };
+  }, []);
   
-  const addStudentBatch = (batch: Omit<StudentBatch, 'id'>) => {
+  const addStudentBatch = useCallback((batch: Omit<StudentBatch, 'id'>) => {
     setAppData(prev => ({
       ...prev,
       studentBatches: [...prev.studentBatches, { ...batch, id: `B${(prev.studentBatches.length + 1).toString().padStart(3, '0')}` }]
     }));
-  };
+  }, []);
 
-  const deleteStudentBatch = (id: string) => {
+  const deleteStudentBatch = useCallback((id: string) => {
     setAppData(prev => ({
       ...prev,
       studentBatches: prev.studentBatches.filter(b => b.id !== id)
     }));
-  };
+  }, []);
 
-  const addFixedSlot = (slot: Omit<FixedSlot, 'id'>) => {
+  const addFixedSlot = useCallback((slot: Omit<FixedSlot, 'id'>) => {
     setAppData(prev => ({
       ...prev,
       fixedSlots: [...prev.fixedSlots, { ...slot, id: `FS${(prev.fixedSlots.length + 1).toString().padStart(3, '0')}` }]
     }));
-  };
+  }, []);
 
-  const deleteFixedSlot = (id: string) => {
+  const deleteFixedSlot = useCallback((id: string) => {
     setAppData(prev => ({
       ...prev,
       fixedSlots: prev.fixedSlots.filter(fs => fs.id !== id)
     }));
-  };
+  }, []);
 
   const value = useMemo(() => ({
     appData,
@@ -194,7 +194,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     resetChanges,
     finalizedTimetable,
     setFinalizedTimetable: handleSetFinalizedTimetable,
-  }), [appData, saveChanges, hasChanges, resetChanges, finalizedTimetable, handleSetFinalizedTimetable]);
+  }), [appData, saveChanges, hasChanges, resetChanges, finalizedTimetable, handleSetFinalizedTimetable, addClassroom, deleteClassroom, addFaculty, deleteFaculty, addSubject, deleteSubject, addStudentBatch, deleteStudentBatch, addFixedSlot, deleteFixedSlot]);
 
   return (
     <AppDataContext.Provider value={value}>
