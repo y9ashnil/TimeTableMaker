@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import {PageHeader} from '@/components/page-header';
 import {Button} from '@/components/ui/button';
 import {
@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type {TimetableOption} from '@/lib/types';
+import type {TimetableOption, TimetableEntry} from '@/lib/types';
 import {
   Activity,
   BarChart,
@@ -35,6 +35,10 @@ import {RadioGroup, RadioGroupItem} from '@/components/ui/radio-group';
 import {Label} from '@/components/ui/label';
 import { generateTimetable } from '@/lib/timetable-generator';
 import { Badge } from '@/components/ui/badge';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+
 
 const FINALIZED_TIMETABLE_KEY = 'timewise_finalized_timetable';
 
@@ -45,7 +49,7 @@ export default function TimetablesPage() {
   const { appData, setFinalizedTimetable, finalizedTimetable } = useAppData();
   const { toast } = useToast();
 
-  const isFinalized = finalizedTimetable !== null && generatedOption !== null && isSelected;
+  const isFinalized = finalizedTimetable !== null;
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const timeSlots = ["9-10 AM", "10-11 AM", "11-12 PM", "12-1 PM", "2-3 PM", "3-4 PM", "4-5 PM"];
@@ -95,7 +99,56 @@ export default function TimetablesPage() {
         title: 'Timetable Finalized',
         description: `You have selected and saved the timetable.`,
       });
+      setIsSelected(true); // Ensure selection state is correct
     }
+  };
+
+  const handleExportPDF = () => {
+    if (!finalizedTimetable) return;
+
+    const doc = new jsPDF();
+    doc.text("Finalized Timetable", 14, 16);
+
+    const head = [['Time', ...daysOfWeek]];
+    const body = timeSlots.map(slot => {
+        const row: string[] = [slot];
+        daysOfWeek.forEach(day => {
+            const entries = finalizedTimetable.filter(e => e.day === day && e.time === slot);
+            const cellText = entries.map(e => `${e.subject}\n${e.faculty}\n${e.batch} @ ${e.room}`).join('\n\n');
+            row.push(cellText);
+        });
+        return row;
+    });
+
+    (doc as any).autoTable({
+        head: head,
+        body: body,
+        startY: 20,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+    });
+
+    doc.save('timetable.pdf');
+  };
+
+  const handleExportExcel = () => {
+    if (!finalizedTimetable) return;
+
+    const worksheetData = [
+        ['Time', ...daysOfWeek],
+        ...timeSlots.map(slot => [
+            slot,
+            ...daysOfWeek.map(day => {
+                const entries = finalizedTimetable.filter(e => e.day === day && e.time === slot);
+                return entries.map(e => `${e.subject} (${e.faculty}) - ${e.batch} @ ${e.room}`).join('\n');
+            })
+        ])
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Timetable');
+    XLSX.writeFile(workbook, 'timetable.xlsx');
   };
 
   return (
@@ -179,7 +232,7 @@ export default function TimetablesPage() {
                 )}
               </CardTitle>
               <CardDescription>
-                {isFinalized ? 'This is the official timetable for the institution.' : 'A sample timetable option. Review scores and schedule below.'}
+                {isFinalized ? 'This is the official timetable for the institution.' : 'Review the scores and schedule below. Click to select, then finalize.'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -242,10 +295,10 @@ export default function TimetablesPage() {
               </div>
             </CardContent>
             <CardFooter className="justify-end gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={!isFinalized}>
                 <Download className="mr-2" /> Export to PDF
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleExportExcel} disabled={!isFinalized}>
                 <Download className="mr-2" /> Export to Excel
               </Button>
             </CardFooter>

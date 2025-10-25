@@ -11,6 +11,7 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarFooter,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
@@ -38,12 +39,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AppDataProvider } from "@/context/AppDataContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ADMIN_ID = "TEST_ADMIN_001";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
+  const isMobile = useIsMobile();
 
   return (
     <AppDataProvider>
@@ -183,6 +186,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>
+          {isMobile && (
+              <header className="flex h-14 items-center justify-between border-b bg-background px-4">
+                  <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+                      <Logo className="h-6 w-6" />
+                      <span className="">TimeWise</span>
+                  </Link>
+                  <SidebarTrigger className="md:hidden"/>
+              </header>
+          )}
           <main className="p-4 sm:p-6 lg:p-8">{children}</main>
         </SidebarInset>
       </SidebarProvider>
